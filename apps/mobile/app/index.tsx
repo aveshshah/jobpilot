@@ -9,20 +9,27 @@ import {
   Text,
   View
 } from "react-native";
-import { api, Job } from "../src/api";
+import { api, ApiNotConfiguredError, Job } from "../src/api";
 
 export default function Home() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [needsSetup, setNeedsSetup] = useState(false);
 
   const load = useCallback(async () => {
     try {
       setError("");
+      setNeedsSetup(false);
       const result = await api.jobs();
       setJobs(result.jobs);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not load jobs");
+      setJobs([]);
+      if (e instanceof ApiNotConfiguredError) {
+        setNeedsSetup(true);
+      } else {
+        setError(e instanceof Error ? e.message : "Could not load jobs");
+      }
     } finally {
       setLoading(false);
     }
@@ -39,6 +46,15 @@ export default function Home() {
         <Link href="/profile" style={styles.link}>Profile</Link>
         <Link href="/resumes" style={styles.link}>Résumés</Link>
       </View>
+      {needsSetup ? (
+        <View style={styles.setupCard}>
+          <Text style={styles.setupTitle}>Connect your JobPilot server</Text>
+          <Text style={styles.setupText}>
+            Your profile and résumés can be saved on this phone now. To import LinkedIn and Indeed email alerts, open Profile and enter your JobPilot server address.
+          </Text>
+          <Link href="/profile" style={styles.setupLink}>Open Profile</Link>
+        </View>
+      ) : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <FlatList
         data={jobs}
@@ -46,7 +62,9 @@ export default function Home() {
         refreshControl={<RefreshControl refreshing={false} onRefresh={load} />}
         ListEmptyComponent={
           <Text style={styles.empty}>
-            No imported jobs yet. Connect Gmail and enable LinkedIn and Indeed email alerts.
+            {needsSetup
+              ? "No jobs are available until a server is connected."
+              : "No imported jobs yet. Connect Gmail and enable LinkedIn and Indeed email alerts."}
           </Text>
         }
         renderItem={({ item }) => (
@@ -78,5 +96,9 @@ const styles = StyleSheet.create({
   company: { marginTop: 6, color: "#334155", fontWeight: "600" },
   meta: { marginTop: 4, color: "#64748b" },
   error: { color: "#b91c1c", marginBottom: 12 },
+  setupCard: { backgroundColor: "#eff6ff", borderColor: "#bfdbfe", borderWidth: 1, borderRadius: 14, padding: 16, marginBottom: 14 },
+  setupTitle: { color: "#1e3a8a", fontWeight: "800", fontSize: 16 },
+  setupText: { color: "#334155", lineHeight: 20, marginTop: 6 },
+  setupLink: { color: "#2563eb", fontWeight: "800", marginTop: 10 },
   empty: { color: "#64748b", textAlign: "center", marginTop: 60, lineHeight: 22 }
 });
