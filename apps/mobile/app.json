@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "JobPilot",
+    "slug": "jobpilot",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "jobpilot",
+    "android": {
+      "package": "com.jobpilot.app",
+      "permissions": []
+    },
+    "plugins": ["expo-router", "expo-secure-store"],
+    "experiments": {"typedRoutes": true}
+  }
+}
