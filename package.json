@@ -1,0 +1,11 @@
+{
+  "name": "jobpilot",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev:api": "npm --workspace @jobpilot/api run dev",
+    "dev:mobile": "npm --workspace @jobpilot/mobile run start",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  }
+}

@@ -1,0 +1,70 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/mobile/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/build-android-apk.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/mobile/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/build-android-apk.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate TypeScript
+        run: npm run typecheck
+
+      - name: Generate Android project
+        working-directory: apps/mobile
+        run: npx expo prebuild --platform android --non-interactive --clean
+
+      - name: Build standalone release APK
+        working-directory: apps/mobile/android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Rename APK
+        run: cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk JobPilot.apk
+
+      - name: Verify JavaScript bundle is packaged
+        run: unzip -l JobPilot.apk | grep -q "assets/index.android.bundle"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: JobPilot-Android-APK
+          path: JobPilot.apk
+          if-no-files-found: error
+          retention-days: 30
