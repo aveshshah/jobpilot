@@ -1,20 +1,21 @@
 import { useEffect, useState } from "react";
 import { useLocalSearchParams } from "expo-router";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { api, Job, Resume } from "../../src/api";
+import { api, Job } from "../../src/api";
+import { loadResumes, StoredResume } from "../../src/storage";
 
 export default function JobDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [job, setJob] = useState<Job>();
-  const [resumes, setResumes] = useState<Resume[]>([]);
+  const [resumes, setResumes] = useState<StoredResume[]>([]);
   const [resumeId, setResumeId] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    Promise.all([api.job(id), api.resumes()]).then(([j, r]) => {
+    Promise.all([api.job(id), loadResumes()]).then(([j, r]) => {
       setJob(j.job);
-      setResumes(r.resumes);
-      setResumeId(r.resumes.find((x) => x.isDefault)?.id ?? r.resumes[0]?.id);
+      setResumes(r);
+      setResumeId(r.find((x) => x.isDefault)?.id ?? r[0]?.id);
     }).catch((e) => Alert.alert("Unable to load", String(e)));
   }, [id]);
 
@@ -59,7 +60,7 @@ export default function JobDetails() {
         <Text style={styles.applyText}>{submitting ? "Applying…" : "Apply now"}</Text>
       </Pressable>
       <Text style={styles.note}>
-        Automatic submission stops when CAPTCHA, consent, sensitive disclosure, or an unknown required question is detected.
+        Your selected résumé must be synchronized with the server before submission. Automatic submission stops when CAPTCHA, consent, sensitive disclosure, or an unknown required question is detected.
       </Text>
     </ScrollView>
   );
