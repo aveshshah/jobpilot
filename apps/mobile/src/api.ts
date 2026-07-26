@@ -1,4 +1,4 @@
-import Constants from "expo-constants";
+import { loadApiUrl } from "./storage";
 
 export type Job = {
   id: string;
@@ -20,17 +20,29 @@ export type Resume = {
   isDefault: boolean;
 };
 
-const configured = Constants.expoConfig?.extra?.apiUrl as string | undefined;
-const API_URL = configured ?? "http://10.0.2.2:4000";
+export class ApiNotConfiguredError extends Error {
+  constructor() {
+    super("JobPilot server is not configured. Open Profile and enter the server address.");
+    this.name = "ApiNotConfiguredError";
+  }
+}
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(options?.headers ?? {})
-    }
-  });
+  const apiUrl = await loadApiUrl();
+  if (!apiUrl) throw new ApiNotConfiguredError();
+
+  let response: Response;
+  try {
+    response = await fetch(`${apiUrl}${path}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(options?.headers ?? {})
+      }
+    });
+  } catch {
+    throw new Error("Cannot reach the JobPilot server. Check the server address and your network.");
+  }
   if (!response.ok) {
     const body = await response.text();
     throw new Error(body || `Request failed: ${response.status}`);
@@ -39,6 +51,8 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  configured: async () => Boolean(await loadApiUrl()),
+  health: () => request<{ ok: true }>("/health"),
   jobs: () => request<{ jobs: Job[] }>("/jobs"),
   job: (id: string) => request<{ job: Job }>(`/jobs/${id}`),
   resumes: () => request<{ resumes: Resume[] }>("/resumes"),
