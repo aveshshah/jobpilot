@@ -1,2 +1,2 @@
 # jobpilot
-Automated job application app
+#Automated job application app
