@@ -106,7 +106,7 @@ to `main` that changes the mobile app starts an Android debug APK build.
 2. Select **Build Android APK**.
 3. Open the latest successful run.
 4. Download the `JobPilot-Android-APK` artifact.
-5. Extract `JobPilot-debug.apk` and install it on an Android phone.
+5. Extract `JobPilot.apk` and install it on an Android phone.
 
-The APK is a test build. It still needs a reachable JobPilot API URL before
+The APK is a standalone release build. It still needs a reachable JobPilot API URL before
 email ingestion, résumé storage, and real application adapters can work.
